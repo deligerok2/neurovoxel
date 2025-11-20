@@ -118,9 +118,14 @@ def nanslice_overlay(  # noqa: PLR0913
         label="Brain template",
     )
 
+    climp = (2, 98)
+    abs_clim = np.max(np.abs(np.nanpercentile(result["beta"][idx, :], climp)))
+    clim = (-abs_clim, abs_clim)
+
     beta_layer = Layer(
         beta_img,
         cmap=cmap,
+        clim=clim,
         alpha=alpha_img,
         alpha_lim=(0, 1),
         alpha_label="1 - p",
