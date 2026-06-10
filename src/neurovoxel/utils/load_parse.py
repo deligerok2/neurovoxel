@@ -87,7 +87,7 @@ def parse_layout(layout: BIDSLayout) -> pd.DataFrame:
         ["SpatialReference", "extension", "tracer"], axis=1, errors="ignore"
     )
     entity_df = entity_df.sort_values(
-        by=["datatype", "suffix", "desc", "param", "trc"], na_position="last"
+        by=["datatype", "suffix", "desc", "param"], na_position="last"
     ).reset_index(drop=True)
 
     def concat_name(row: pd.Series) -> str:
