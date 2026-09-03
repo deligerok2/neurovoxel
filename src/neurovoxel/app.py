@@ -21,6 +21,7 @@ from neurovoxel.components.user_input import (
 )
 from neurovoxel.components.visualization import render_visualization
 from neurovoxel.utils.load_parse import (
+    config_to_schema,
     load_bids,
     load_config,
     parse_layout,
@@ -29,7 +30,7 @@ from neurovoxel.utils.load_parse import (
 from neurovoxel.utils.viz import save_all_maps
 
 
-def main(
+def main(  # noqa: PLR0915
     config_file: Path | None = None,
     autoload: bool = False,
 ) -> None:
@@ -45,13 +46,18 @@ def main(
 
     st.session_state.setdefault("paths", {})
     st.session_state.setdefault("analysis", {})
+    st.session_state.setdefault("schema", None)
+    st.session_state.setdefault("entity_df", None)
     if config_file:
         st.info(f"Using NeuroVoxel configuration file: {config_file}")
+
         config = load_config(Path(config_file))
+
         st.toast(
             "Configuration file loaded and validated! "
             "Inputs will be pre-filled."
         )
+
         st.session_state.paths.update(config.get("paths", {}))
         st.session_state.analysis.update(config.get("analysis", {}))
 
@@ -66,20 +72,30 @@ def main(
             else st.button("Load BIDS dataset", disabled=not valid_bids)
         )
 
-        if load_btn:
+        if load_btn is True or (isinstance(load_btn, bool) and load_btn):
             info_loading_bids_box = st.empty()
-            info_loading_bids_box.info("Loading BIDS dataset...")
+            info_loading_bids_box.info("Loading BIDS dataset...") 
+            config_path = Path(
+                st.session_state.get("paths", {}).get("bids_config")
+            )
+            st.session_state.schema = config_to_schema(config_path)
+
+            # st.write("BIDS ROOT:", st.session_state.get("paths", {}).get("bids_root")) # temporary
+            # st.write("CONFIG:", st.session_state.schema) # temporary
+
             st.session_state.layout = load_bids(
                 bids_root=Path(
                     st.session_state.get("paths", {}).get("bids_root")
                 ),
-                config_fname=Path(
-                    st.session_state.get("paths", {}).get("bids_config")
-                ),
+                schema=st.session_state.schema,
             )
+
             info_loading_bids_box.empty()
             st.toast("BIDS dataset loaded successfully!")
-            st.session_state.entity_df = parse_layout(st.session_state.layout)
+
+            st.session_state.entity_df = parse_layout(
+                st.session_state.layout
+            )
 
         render_table_input(autoload)
         valid_outputdir = render_outputdir_input(autoload)
@@ -91,8 +107,7 @@ def main(
         with st.expander("Advanced"):
             render_analysis_param_input()
 
-    if "entity_df" in st.session_state:
-        # Render editable table; save any user edits to session state
+    if st.session_state.get("entity_df") is not None:
         st.session_state.entity_df = render_entity_table(
             st.session_state.entity_df
         )
@@ -136,7 +151,6 @@ def main(
                 st.session_state.masker,
                 lhs,
             )
-            # save tbl
             st.session_state.tbl.to_csv(outpath / "tbl.csv", index=False)
 
     render_footer()
@@ -170,3 +184,6 @@ if __name__ == "__main__":
         config_file=args.config_file,
         autoload=args.autoload,
     )
+
+with st.expander("Debug: Session State"): #temporary
+    st.write(st.session_state)

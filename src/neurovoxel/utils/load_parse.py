@@ -8,19 +8,21 @@ import json
 from copy import deepcopy
 from typing import TYPE_CHECKING, Any
 
+import bids2table as b2t2
+import bidsschematools as bst
 import jsonschema
 import pandas as pd
-from bids.layout import BIDSLayout
 from formulaic import (
     model_matrix,  # pyright: ignore[reportUnknownVariableType]
 )
 
 from neurovoxel.utils import SCHEMA
+from pathlib import Path
 
 if TYPE_CHECKING:
-    from pathlib import Path
-
+    from bids.layout import BIDSLayout
     from bids.layout.models import BIDSImageFile
+    from bidsschematools.types import Namespace  # type: ignore  # noqa: PGH003
 
 
 def load_config(config_file: Path) -> dict[str, Any]:
@@ -32,71 +34,87 @@ def load_config(config_file: Path) -> dict[str, Any]:
 
     return config
 
+def config_to_schema(config: Path) -> Namespace:
+    """Convert a NeuroVoxel config file to a Namespace object."""
+    schema = bst.schema.load_schema() # type: ignore
+    with config.open("r") as f:
+        config_dict = json.load(f)["entities"]
+        config_dict = [ #this removes the original 
+             item for item in config_dict
+            if item.get("name") != "trc"
+        ]
+        for i in config_dict:
+            if i["name"] not in schema.objects.entities: # type: ignore
+                schema.objects.entities[i["name"]] = { # type: ignore
+                    "display_name": i["name"],
+                    "description": i["name"],
+                    "name": i["name"],
+                    "type": "string",
+                    "format": "label",
+                }
+            if i["name"] not in schema.rules.entities: # pyright: ignore[reportUnknownMemberType]
+                schema.rules.entities.append(i["name"]) # pyright: ignore[reportUnknownMemberType]
+
+    return schema  # type: ignore[return-value]
+
 
 def load_bids(
     bids_root: Path,
-    config_fname: Path | None = None,
-    database_path: Path | None = None,
-) -> BIDSLayout:
+    schema: Namespace | None = None,  # noqa: ARG001
+) -> pd.DataFrame:
     """Load BIDS dataset."""
-    layout = BIDSLayout(
+    layout = b2t2.index_dataset( # pyright: ignore[reportUnknownVariableType] # pyright: ignore[reportUnknownMemberType] # type: ignore  # noqa: PGH003
         bids_root,
-        validate=False,
-        derivatives=False,
-        config=["bids", "derivatives", config_fname] if config_fname else None,
-        database_path=database_path,
+        schema=schema,
+    ).to_pandas()
+    layout["nifti_files"] = layout.apply(
+        lambda row: str(Path(row["root"]) / row["path"]),
+        axis=1,
     )
+    return layout # pyright: ignore[reportUnknownVariableType]
 
-    layout.add_derivatives(  # pyright: ignore[reportUnknownMemberType]
-        bids_root / "derivatives",
-        config=["bids", "derivatives", config_fname] if config_fname else None,
-    )
-    return layout
+def parse_layout(table: pd.DataFrame) -> pd.DataFrame:
+    """Create a table of unique imaging types from a bids2table DataFrame."""
+    # Keep only NIfTI files
+    entity_df = table[
+        table["ext"].isin([".nii.gz", ".nii"]) # pyright: ignore[reportUnknownMemberType]
+    ].copy()
+    # Columns that define a unique imaging type
+    entity_cols = [
+        "datatype",
+        "desc",
+        "space",
+        "suffix",
+        "param",
+        "meas",
+        "trc",
+    ]
 
+    # Keep only columns that actually exist
+    entity_cols = [
+        col for col in entity_cols
+        if col in entity_df.columns
+    ]
 
-def parse_layout(layout: BIDSLayout) -> pd.DataFrame:
-    """Recreate image-types table from a BIDSLayout.
+    # Keep only those columns
+    entity_df = entity_df[entity_cols]
 
-    Args:
-        layout: The BIDS layout object.
+    # Remove duplicate ROWS
+    entity_df = entity_df.drop_duplicates().reset_index(drop=True)
 
-    Returns:
-        DataFrame of image types.
-    """
-    # list available imaging outcomes
-    img_list: list[BIDSImageFile] = layout.get(  # pyright: ignore[reportUnknownVariableType, reportUnknownMemberType]
-        extension="nii.gz"
-    ) + layout.get(extension="nii")  # pyright: ignore[reportUnknownMemberType]
-    img_type_counts: dict[tuple[tuple[str, object], ...], int] = {}
-    entity_df = pd.DataFrame()
+    # Sort
+    sort_cols = [
+        col
+        for col in ["datatype", "suffix", "desc", "param"]
+        if col in entity_df.columns
+    ]
 
-    for img in img_list:
-        entities = deepcopy(img.entities)
-        for k in ("subject", "session"):
-            entities.pop(k, None)
-        key = tuple(entities.items())
-        if key in img_type_counts:
-            img_type_counts[key] += 1
-        else:
-            entity_df = pd.concat(
-                [entity_df, pd.DataFrame([entities])], ignore_index=True
-            )
-            img_type_counts[key] = 1
-
-    entity_df = entity_df.drop(
-        ["SpatialReference", "extension", "tracer"], axis=1, errors="ignore"
-    )
     entity_df = entity_df.sort_values(
-        by=["datatype", "suffix", "desc", "param"], na_position="last"
+        by=sort_cols
     ).reset_index(drop=True)
 
+    # Create user-facing name
     def concat_name(row: pd.Series) -> str:
-        """Concatenate columns if they exist and are not null.
-
-        Return:
-        ------
-            Concatenated columns or 'Enter name here' if none are present.
-        """
         parts = [
             str(row[col])
             for col in ["desc", "param", "trc", "meas", "suffix"]
@@ -105,8 +123,13 @@ def parse_layout(layout: BIDSLayout) -> pd.DataFrame:
         return "_".join(parts) if parts else "Enter name here"
 
     entity_df["name"] = entity_df.apply(concat_name, axis=1)
-    return entity_df
 
+    # Put name first
+    entity_df = entity_df[
+        ["name", *entity_cols]
+    ]
+
+    return entity_df
 
 def parse_query(
     query: str,

@@ -1,8 +1,9 @@
 """UI components for the NeuroVoxel model runner feature."""
 
 import streamlit as st
-
+import pandas as pd
 from neurovoxel.utils.analysis import get_masker, run_query
+from pathlib import Path
 
 
 def render_model_runner(lhs: str) -> None:
@@ -14,9 +15,14 @@ def render_model_runner(lhs: str) -> None:
         .drop(columns=["name"])
         .dropna(axis=1)  # pyright: ignore[reportUnknownMemberType]
     )
-    images = st.session_state.layout.get(  # pyright: ignore[reportUnknownMemberType, reportUnknownVariableType]
-        **row.to_dict(orient="records")[0],  # pyright: ignore[reportCallIssue, reportUnknownMemberType]
-    )
+    filters = row.to_dict(orient="records")[0]
+    images = st.session_state.layout.copy()
+
+    for col, value in filters.items():
+        if col in images.columns:
+            images = images[images[col] == value]
+
+    st.dataframe(images) #temporary
 
     with st.spinner("Running analysis..."):
         # call relevant function from neurovoxel
