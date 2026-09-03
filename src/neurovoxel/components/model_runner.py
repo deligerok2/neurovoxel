@@ -1,9 +1,9 @@
 """UI components for the NeuroVoxel model runner feature."""
 
+
 import streamlit as st
-import pandas as pd
+
 from neurovoxel.utils.analysis import get_masker, run_query
-from pathlib import Path
 
 
 def render_model_runner(lhs: str) -> None:
@@ -22,7 +22,7 @@ def render_model_runner(lhs: str) -> None:
         if col in images.columns:
             images = images[images[col] == value]
 
-    st.dataframe(images) #temporary
+    st.dataframe(images)  # temporary
 
     with st.spinner("Running analysis..."):
         # call relevant function from neurovoxel

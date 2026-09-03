@@ -5,7 +5,7 @@
 from __future__ import annotations
 
 import json
-from copy import deepcopy
+from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import bids2table as b2t2
@@ -17,11 +17,8 @@ from formulaic import (
 )
 
 from neurovoxel.utils import SCHEMA
-from pathlib import Path
 
 if TYPE_CHECKING:
-    from bids.layout import BIDSLayout
-    from bids.layout.models import BIDSImageFile
     from bidsschematools.types import Namespace  # type: ignore  # noqa: PGH003
 
 
@@ -34,50 +31,51 @@ def load_config(config_file: Path) -> dict[str, Any]:
 
     return config
 
+
 def config_to_schema(config: Path) -> Namespace:
     """Convert a NeuroVoxel config file to a Namespace object."""
-    schema = bst.schema.load_schema() # type: ignore
+    schema = bst.schema.load_schema()  # type: ignore  # noqa: PGH003
     with config.open("r") as f:
         config_dict = json.load(f)["entities"]
-        config_dict = [ #this removes the original 
-             item for item in config_dict
-            if item.get("name") != "trc"
+        config_dict = [  # this removes the original
+            item for item in config_dict if item.get("name") != "trc"
         ]
         for i in config_dict:
-            if i["name"] not in schema.objects.entities: # type: ignore
-                schema.objects.entities[i["name"]] = { # type: ignore
+            if i["name"] not in schema.objects.entities:  # type: ignore  # noqa: PGH003
+                schema.objects.entities[i["name"]] = {  # type: ignore  # noqa: PGH003
                     "display_name": i["name"],
                     "description": i["name"],
                     "name": i["name"],
                     "type": "string",
                     "format": "label",
                 }
-            if i["name"] not in schema.rules.entities: # pyright: ignore[reportUnknownMemberType]
-                schema.rules.entities.append(i["name"]) # pyright: ignore[reportUnknownMemberType]
+            if i["name"] not in schema.rules.entities:  # pyright: ignore[reportUnknownMemberType]
+                schema.rules.entities.append(i["name"])  # pyright: ignore[reportUnknownMemberType]
 
     return schema  # type: ignore[return-value]
 
 
 def load_bids(
     bids_root: Path,
-    schema: Namespace | None = None,  # noqa: ARG001
+    schema: Namespace | None = None,
 ) -> pd.DataFrame:
     """Load BIDS dataset."""
-    layout = b2t2.index_dataset( # pyright: ignore[reportUnknownVariableType] # pyright: ignore[reportUnknownMemberType] # type: ignore  # noqa: PGH003
+    layout = b2t2.index_dataset(  # pyright: ignore[reportUnknownVariableType] # pyright: ignore[reportUnknownMemberType] # type: ignore  # noqa: PGH003
         bids_root,
         schema=schema,
     ).to_pandas()
-    layout["nifti_files"] = layout.apply(
-        lambda row: str(Path(row["root"]) / row["path"]),
+    layout["nifti_files"] = layout.apply( # pyright: ignore[reportUnknownMemberType]
+        lambda row: str(Path(row["root"]) / row["path"]),  # type: ignore  # noqa: PGH003
         axis=1,
     )
-    return layout # pyright: ignore[reportUnknownVariableType]
+    return layout  # pyright: ignore[reportUnknownVariableType]
+
 
 def parse_layout(table: pd.DataFrame) -> pd.DataFrame:
     """Create a table of unique imaging types from a bids2table DataFrame."""
     # Keep only NIfTI files
     entity_df = table[
-        table["ext"].isin([".nii.gz", ".nii"]) # pyright: ignore[reportUnknownMemberType]
+        table["ext"].isin([".nii.gz", ".nii"])  # pyright: ignore[reportUnknownMemberType]
     ].copy()
     # Columns that define a unique imaging type
     entity_cols = [
@@ -91,10 +89,7 @@ def parse_layout(table: pd.DataFrame) -> pd.DataFrame:
     ]
 
     # Keep only columns that actually exist
-    entity_cols = [
-        col for col in entity_cols
-        if col in entity_df.columns
-    ]
+    entity_cols = [col for col in entity_cols if col in entity_df.columns]
 
     # Keep only those columns
     entity_df = entity_df[entity_cols]
@@ -109,9 +104,7 @@ def parse_layout(table: pd.DataFrame) -> pd.DataFrame:
         if col in entity_df.columns
     ]
 
-    entity_df = entity_df.sort_values(
-        by=sort_cols
-    ).reset_index(drop=True)
+    entity_df = entity_df.sort_values(by=sort_cols).reset_index(drop=True)
 
     # Create user-facing name
     def concat_name(row: pd.Series) -> str:
@@ -125,11 +118,10 @@ def parse_layout(table: pd.DataFrame) -> pd.DataFrame:
     entity_df["name"] = entity_df.apply(concat_name, axis=1)
 
     # Put name first
-    entity_df = entity_df[
-        ["name", *entity_cols]
-    ]
+    entity_df = entity_df[["name", *entity_cols]]
 
     return entity_df
+
 
 def parse_query(
     query: str,

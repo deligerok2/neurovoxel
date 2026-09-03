@@ -72,16 +72,16 @@ def main(  # noqa: PLR0915
             else st.button("Load BIDS dataset", disabled=not valid_bids)
         )
 
-        if load_btn is True or (isinstance(load_btn, bool) and load_btn):
+        if load_btn is True or (isinstance(load_btn, bool) and load_btn): # pyright: ignore[reportUnnecessaryIsInstance]
             info_loading_bids_box = st.empty()
-            info_loading_bids_box.info("Loading BIDS dataset...") 
+            info_loading_bids_box.info("Loading BIDS dataset...")
             config_path = Path(
                 st.session_state.get("paths", {}).get("bids_config")
             )
             st.session_state.schema = config_to_schema(config_path)
 
-            # st.write("BIDS ROOT:", st.session_state.get("paths", {}).get("bids_root")) # temporary
-            # st.write("CONFIG:", st.session_state.schema) # temporary
+            # st.write("BIDS ROOT:", st.session_state.get("paths", {}).get("bids_root")) # temporary  # noqa: E501, ERA001
+            # st.write("CONFIG:", st.session_state.schema) # temporary  # noqa: E501, ERA001
 
             st.session_state.layout = load_bids(
                 bids_root=Path(
@@ -93,9 +93,7 @@ def main(  # noqa: PLR0915
             info_loading_bids_box.empty()
             st.toast("BIDS dataset loaded successfully!")
 
-            st.session_state.entity_df = parse_layout(
-                st.session_state.layout
-            )
+            st.session_state.entity_df = parse_layout(st.session_state.layout)
 
         render_table_input(autoload)
         valid_outputdir = render_outputdir_input(autoload)
@@ -185,5 +183,5 @@ if __name__ == "__main__":
         autoload=args.autoload,
     )
 
-with st.expander("Debug: Session State"): #temporary
+with st.expander("Debug: Session State"):  # temporary
     st.write(st.session_state)
