@@ -64,7 +64,7 @@ def load_bids(
         bids_root,
         schema=schema,
     ).to_pandas()
-    layout["nifti_files"] = layout.apply( # pyright: ignore[reportUnknownMemberType]
+    layout["nifti_files"] = layout.apply(  # pyright: ignore[reportUnknownMemberType]
         lambda row: str(Path(row["root"]) / row["path"]),  # type: ignore  # noqa: PGH003
         axis=1,
     )

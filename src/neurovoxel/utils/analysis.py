@@ -6,7 +6,6 @@ from typing import Any, NotRequired, TypedDict
 
 import numpy as np
 import pandas as pd
-from bids.layout.models import BIDSImageFile
 from formulaic import (
     Formula,
     model_matrix,  # pyright: ignore[reportUnknownVariableType]
@@ -65,7 +64,7 @@ def run_query(  # noqa: PLR0913
     query: str,
     inference_terms: set[str],
     tbl: pd.DataFrame,
-    images: list[BIDSImageFile],
+    images: pd.DataFrame,
     masker: MultiNiftiMasker,
     n_perm: int,
     n_jobs: int,
@@ -90,15 +89,15 @@ def run_query(  # noqa: PLR0913
     rhs = rhs.strip()
 
     image_df = pd.DataFrame()
-    for index, image in enumerate(images):
+    for index, image in images.iterrows():
         image_df = pd.concat(
             [
                 image_df,
                 pd.DataFrame(
                     {
-                        "subject": image.entities["subject"],
-                        "session": image.entities["session"],
-                        lhs: image.path,
+                        "subject": image["sub"],
+                        "session": image["ses"],
+                        lhs: image["nifti_files"],
                     },
                     index=[index],
                 ),

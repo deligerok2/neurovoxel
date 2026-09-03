@@ -72,7 +72,7 @@ def main(  # noqa: PLR0915
             else st.button("Load BIDS dataset", disabled=not valid_bids)
         )
 
-        if load_btn is True or (isinstance(load_btn, bool) and load_btn): # pyright: ignore[reportUnnecessaryIsInstance]
+        if load_btn is True or (isinstance(load_btn, bool) and load_btn):  # pyright: ignore[reportUnnecessaryIsInstance]
             info_loading_bids_box = st.empty()
             info_loading_bids_box.info("Loading BIDS dataset...")
             config_path = Path(
@@ -182,6 +182,3 @@ if __name__ == "__main__":
         config_file=args.config_file,
         autoload=args.autoload,
     )
-
-with st.expander("Debug: Session State"):  # temporary
-    st.write(st.session_state)

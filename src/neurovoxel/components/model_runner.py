@@ -1,6 +1,5 @@
 """UI components for the NeuroVoxel model runner feature."""
 
-
 import streamlit as st
 
 from neurovoxel.utils.analysis import get_masker, run_query
@@ -22,7 +21,11 @@ def render_model_runner(lhs: str) -> None:
         if col in images.columns:
             images = images[images[col] == value]
 
-    st.dataframe(images)  # temporary
+    # Keep only the columns we want
+    images = images[["nifti_files", "sub", "ses"]].copy()
+
+    st.write("images variable")
+    st.session_state.images = images  # temporary
 
     with st.spinner("Running analysis..."):
         # call relevant function from neurovoxel
@@ -37,7 +40,7 @@ def render_model_runner(lhs: str) -> None:
             st.session_state.get("analysis", {}).get("query"),
             st.session_state.get("analysis", {}).get("inference_terms"),
             st.session_state.tbl,
-            images,  # pyright: ignore[reportUnknownArgumentType]
+            st.session_state.images,  # pyright: ignore[reportUnknownArgumentType]
             st.session_state.masker,
             n_perm=st.session_state.get("analysis", {}).get("n_perm"),
             n_jobs=st.session_state.get("analysis", {}).get("n_jobs", -1),
