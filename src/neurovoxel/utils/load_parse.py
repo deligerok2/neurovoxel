@@ -9,8 +9,6 @@ from copy import deepcopy
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-import bids2table
-import bidsschematools
 import jsonschema
 import pandas as pd
 from bids2table.pybids import (
@@ -46,10 +44,10 @@ def load_bids(
 ) -> BIDSLayout:
     """Load BIDS dataset."""
     layout = BIDSLayout(
-        root = bids_root,
-        derivatives = derivatives,
-        cache_path = cache_path,
-        database_path = database_path,
+        root=bids_root,
+        derivatives=derivatives,
+        cache_path=cache_path,
+        database_path=database_path,
     )
     return layout
 

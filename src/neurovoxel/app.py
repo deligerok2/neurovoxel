@@ -74,21 +74,26 @@ def main(
                     st.session_state.get("paths", {}).get("bids_root")
                 ),
                 derivatives=Path(
-                    st.session_state.get("paths", {}).get("bids_root"))
-                    / "derivatives" / "preprocessed",
+                    st.session_state.get("paths", {}).get("bids_root")
+                )
+                / "derivatives"
+                / "preprocessed",
                 cache_path=Path(
-                    st.session_state.get("paths", {}).get("bids_cache"))
-                    if st.session_state.get("paths", {}).get("bids_cache")
+                    st.session_state.get("paths", {}).get("bids_cache")
+                )
+                if st.session_state.get("paths", {}).get("bids_cache")
                 else None,
                 database_path=Path(
-                    st.session_state.get("paths", {}).get("bids_db"))
-                    if st.session_state.get("paths", {}).get("bids_db")
-                    else None,
-                config_fname=Path(
-                    st.session_state.get("paths", {}).get("bids_config"))
-                    if st.session_state.get("paths", {}).get("bids_config")
-                    else None
+                    st.session_state.get("paths", {}).get("bids_db")
                 )
+                if st.session_state.get("paths", {}).get("bids_db")
+                else None,
+                config_fname=Path(
+                    st.session_state.get("paths", {}).get("bids_config")
+                )
+                if st.session_state.get("paths", {}).get("bids_config")
+                else None,
+            )
 
             info_loading_bids_box.empty()
             st.toast("BIDS dataset loaded successfully!")

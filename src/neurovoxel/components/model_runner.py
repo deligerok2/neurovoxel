@@ -1,9 +1,10 @@
 """UI components for the NeuroVoxel model runner feature."""
 
+from pathlib import Path
+
 import streamlit as st
 
 from neurovoxel.utils.analysis import get_masker, run_query
-from pathlib import Path
 
 
 def render_model_runner(lhs: str) -> None:
