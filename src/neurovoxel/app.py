@@ -73,10 +73,23 @@ def main(
                 bids_root=Path(
                     st.session_state.get("paths", {}).get("bids_root")
                 ),
+                derivatives=Path(
+                    st.session_state.get("paths", {}).get("bids_root"))
+                    / "derivatives" / "preprocessed",
+                cache_path=Path(
+                    st.session_state.get("paths", {}).get("bids_cache"))
+                    if st.session_state.get("paths", {}).get("bids_cache")
+                else None,
+                database_path=Path(
+                    st.session_state.get("paths", {}).get("bids_db"))
+                    if st.session_state.get("paths", {}).get("bids_db")
+                    else None,
                 config_fname=Path(
-                    st.session_state.get("paths", {}).get("bids_config")
-                ),
-            )
+                    st.session_state.get("paths", {}).get("bids_config"))
+                    if st.session_state.get("paths", {}).get("bids_config")
+                    else None
+                )
+
             info_loading_bids_box.empty()
             st.toast("BIDS dataset loaded successfully!")
             st.session_state.entity_df = parse_layout(st.session_state.layout)
@@ -170,3 +183,6 @@ if __name__ == "__main__":
         config_file=args.config_file,
         autoload=args.autoload,
     )
+
+with st.expander("Session State"):
+    st.write(st.session_state)

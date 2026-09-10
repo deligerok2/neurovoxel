@@ -23,6 +23,7 @@ def render_bids_input(autoload: bool = False) -> bool:
     # Update session state if the input changes
     if bids_root:
         st.session_state.paths["bids_root"] = bids_root
+    
 
     valid_bids = False
     if st.session_state.get("paths", {}).get("bids_root"):
@@ -35,6 +36,50 @@ def render_bids_input(autoload: bool = False) -> bool:
             st.error(f"Directory does not exist: {bids_root_path}")
     else:
         st.write("❗️ No BIDS root directory selected.")
+
+    # Input for cache datasets
+    bids_cache_box = st.empty()
+    bids_cache = bids_cache_box.text_input(
+        "Optional: BIDS parquet cache file",
+        value=st.session_state.paths.get("bids_cache"),
+        key="bids_cache_input",
+    )
+
+    if bids_cache:
+        st.session_state.paths["bids_cache"] = bids_cache
+    else:
+        st.session_state.paths.pop("bids_cache", None)
+
+    bids_cache_path: Path | None = None
+    if st.session_state.get("paths", {}).get("bids_cache"):
+        bids_cache_path = Path(
+            st.session_state.get("paths", {}).get("bids_cache")
+        )
+        if not bids_cache_path.is_file():
+            valid_bids = False
+            st.error(f"File does not exist: {bids_cache_path}")
+
+    # input for SQLite databse files
+    bids_db_box = st.empty()
+    bids_db = bids_db_box.text_input(
+        "Optional: BIDS SQLite database file",
+        value=st.session_state.paths.get("bids_db"),
+        key="bids_db_input",
+    )
+
+    if bids_db:
+        st.session_state.paths["bids_db"] = bids_db
+    else:
+        st.session_state.paths.pop("bids_db", None)
+
+    bids_db_path: Path | None = None
+    if st.session_state.get("paths", {}).get("bids_db"):
+        bids_db_path = Path(
+            st.session_state.get("paths", {}).get("bids_db")
+        )
+        if not bids_db_path.is_file():
+            valid_bids = False
+            st.error(f"File does not exist: {bids_db_path}")
 
     # Use a text input for a custom BIDS config file
     bids_config_box = st.empty()
@@ -64,6 +109,8 @@ def render_bids_input(autoload: bool = False) -> bool:
     if autoload and valid_bids:
         bids_root_box.empty()
         bids_config_box.empty()
+        bids_cache_box.empty()
+        bids_db_box.empty()
 
     return valid_bids
 

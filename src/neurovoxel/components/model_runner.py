@@ -3,6 +3,7 @@
 import streamlit as st
 
 from neurovoxel.utils.analysis import get_masker, run_query
+from pathlib import Path
 
 
 def render_model_runner(lhs: str) -> None:
@@ -29,6 +30,7 @@ def render_model_runner(lhs: str) -> None:
 
         st.session_state.result, st.session_state.tbl = run_query(
             st.session_state.get("analysis", {}).get("query"),
+            Path(st.session_state.get("paths", {}).get("bids_root")),
             st.session_state.get("analysis", {}).get("inference_terms"),
             st.session_state.tbl,
             images,  # pyright: ignore[reportUnknownArgumentType]
