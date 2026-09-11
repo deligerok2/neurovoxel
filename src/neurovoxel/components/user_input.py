@@ -11,77 +11,77 @@ from neurovoxel.utils.analysis import STANDARDIZATION_OPTS
 
 
 def render_bids_input(autoload: bool = False) -> bool:
-    """Get BIDS directory path and optional files."""
-    paths = st.session_state.paths
-    valid_bids = True
-
-    # BIDS root directory
+    """Get BIDS directory path and config file (optional)."""
+    # Use a text input for the BIDS root directory path
     bids_root_box = st.empty()
     bids_root = bids_root_box.text_input(
         "BIDS root directory",
-        value=paths.get("bids_root", "") or "",
+        value=st.session_state.paths.get("bids_root"),
         key="bids_root_input",
     )
 
+    # Update session state if the input changes
     if bids_root:
-        paths["bids_root"] = bids_root
+        st.session_state.paths["bids_root"] = bids_root
 
-    bids_root_path = Path(bids_root) if bids_root else None
-    if bids_root_path is None:
-        valid_bids = False
-        st.write("❗️ No BIDS root directory selected.")
-    elif not bids_root_path.is_dir():
-        valid_bids = False
-        st.error(f"Directory does not exist: {bids_root_path}")
-
-    # Optional file inputs
-    optional_files = [
-        (
-            "Optional: BIDS parquet cache file",
-            "bids_cache",
-            "bids_cache_input",
-        ),
-        (
-            "Optional: BIDS SQLite database file",
-            "bids_db",
-            "bids_db_input",
-        ),
-        (
-            "Optional: Custom BIDS configuration",
-            "bids_config",
-            "bids_config_input",
-        ),
-    ]
-
-    file_boxes = []
-
-    for label, path_key, widget_key in optional_files:
-        box = st.empty()
-        file_boxes.append(box) # pyright: ignore[reportUnknownMemberType]
-
-        value = box.text_input(
-            label,
-            value=paths.get(path_key, "") or "",
-            key=widget_key,
+    valid_bids = False
+    if st.session_state.get("paths", {}).get("bids_root"):
+        bids_root_path = Path(
+            st.session_state.get("paths", {}).get("bids_root")
         )
-
-        if value:
-            paths[path_key] = value
-            path = Path(value)
-
-            if not path.is_file():
-                valid_bids = False
-                st.error(f"File does not exist: {path}")
+        if bids_root_path.is_dir():
+            valid_bids = True
         else:
-            paths.pop(path_key, None)
+            st.error(f"Directory does not exist: {bids_root_path}")
+    else:
+        st.write("❗️ No BIDS root directory selected.")
+
+    # Input for cache datasets
+    bids_cache_box = st.empty()
+    bids_cache = bids_cache_box.text_input(
+        "Optional: BIDS parquet cache file",
+        value=st.session_state.paths.get("bids_cache"),
+        key="bids_cache_input",
+    )
+
+    if bids_cache:
+        st.session_state.paths["bids_cache"] = bids_cache
+
+    bids_cache_path: Path | None = None
+    if st.session_state.get("paths", {}).get("bids_cache"):
+        bids_cache_path = Path(
+            st.session_state.get("paths", {}).get("bids_cache")
+        )
+        if not bids_cache_path.is_file():
+            valid_bids = False
+            st.error(f"File does not exist: {bids_cache_path}")
+
+    # input for SQLite databse files
+    derivatives_box = st.empty()
+    bids_deriv = derivatives_box.text_input(
+        "Optional: Derivatives directory (if not in BIDS root)",
+        value=st.session_state.paths.get("bids_deriv"),
+        key="bids_deriv_input",
+    )
+
+    if bids_deriv:
+        st.session_state.paths["bids_deriv"] = bids_deriv
+
+    deriv_path: Path | None = None
+    if st.session_state.get("paths", {}).get("bids_deriv"):
+        deriv_path = Path(
+            st.session_state.get("paths", {}).get("bids_deriv")
+        )
+        if not deriv_path.is_dir():
+            valid_bids = False
+            st.error(f"Directory does not exist: {deriv_path}")
 
     if autoload and valid_bids:
         bids_root_box.empty()
-        for box in file_boxes: # pyright: ignore[reportUnknownVariableType]
-            box.empty() # type: ignore  # noqa: PGH003
+        bids_cache_box.empty()
+        derivatives_box.empty()
 
     return valid_bids
-
 
 
 def render_template_input(

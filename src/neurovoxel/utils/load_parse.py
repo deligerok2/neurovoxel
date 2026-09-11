@@ -62,9 +62,9 @@ def parse_layout(layout: BIDSLayout) -> pd.DataFrame:
         DataFrame of image types.
     """
     # list available imaging outcomes
-    img_list: list[BIDSFile] = layout.get(  # pyright: ignore[reportUnknownVariableType, reportUnknownMemberType]
+    img_list: list[BIDSFile] = layout.get(
         extension=".nii.gz"
-    ) + layout.get(extension="nii")  # pyright: ignore[reportUnknownMemberType]
+    ) + layout.get(extension="nii")  # pyright: ignore[reportAssignmentType, reportUnknownMemberType]
     img_type_counts: dict[tuple[tuple[str, object], ...], int] = {}
     entity_df = pd.DataFrame()
 
