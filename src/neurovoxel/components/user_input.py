@@ -15,7 +15,7 @@ def render_bids_input(autoload: bool = False) -> bool:
     # Use a text input for the BIDS root directory path
     bids_root_box = st.empty()
     bids_root = bids_root_box.text_input(
-        "BIDS root directory",
+        "BIDS derivatives directory",
         value=st.session_state.paths.get("bids_root"),
         key="bids_root_input",
     )
@@ -23,6 +23,8 @@ def render_bids_input(autoload: bool = False) -> bool:
     # Update session state if the input changes
     if bids_root:
         st.session_state.paths["bids_root"] = bids_root
+    else:
+        st.session_state.paths.pop("bids_root", None)
 
     valid_bids = False
     if st.session_state.get("paths", {}).get("bids_root"):
@@ -46,6 +48,8 @@ def render_bids_input(autoload: bool = False) -> bool:
 
     if bids_cache:
         st.session_state.paths["bids_cache"] = bids_cache
+    else:
+        st.session_state.paths.pop("bids_cache", None)
 
     bids_cache_path: Path | None = None
     if st.session_state.get("paths", {}).get("bids_cache"):
@@ -56,30 +60,9 @@ def render_bids_input(autoload: bool = False) -> bool:
             valid_bids = False
             st.error(f"File does not exist: {bids_cache_path}")
 
-    # input for SQLite databse files
-    derivatives_box = st.empty()
-    bids_deriv = derivatives_box.text_input(
-        "Optional: Derivatives directory (if not in BIDS root)",
-        value=st.session_state.paths.get("bids_deriv"),
-        key="bids_deriv_input",
-    )
-
-    if bids_deriv:
-        st.session_state.paths["bids_deriv"] = bids_deriv
-
-    deriv_path: Path | None = None
-    if st.session_state.get("paths", {}).get("bids_deriv"):
-        deriv_path = Path(
-            st.session_state.get("paths", {}).get("bids_deriv")
-        )
-        if not deriv_path.is_dir():
-            valid_bids = False
-            st.error(f"Directory does not exist: {deriv_path}")
-
     if autoload and valid_bids:
         bids_root_box.empty()
         bids_cache_box.empty()
-        derivatives_box.empty()
 
     return valid_bids
 

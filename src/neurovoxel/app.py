@@ -22,7 +22,6 @@ from neurovoxel.components.user_input import (
 from neurovoxel.components.visualization import render_visualization
 from neurovoxel.utils.load_parse import (
     load_bids,
-    load_config,
     parse_layout,
     parse_query,
 )
@@ -30,7 +29,6 @@ from neurovoxel.utils.viz import save_all_maps
 
 
 def main(
-    config_file: Path | None = None,
     autoload: bool = False,
 ) -> None:
     """Main entry point for the NeuroVoxel Streamlit app.
@@ -45,15 +43,6 @@ def main(
 
     st.session_state.setdefault("paths", {})
     st.session_state.setdefault("analysis", {})
-    if config_file:
-        st.info(f"Using NeuroVoxel configuration file: {config_file}")
-        config = load_config(Path(config_file))
-        st.toast(
-            "Configuration file loaded and validated! "
-            "Inputs will be pre-filled."
-        )
-        st.session_state.paths.update(config.get("paths", {}))
-        st.session_state.analysis.update(config.get("analysis", {}))
 
     col1, col2 = st.columns(2)
     with col1:
@@ -73,11 +62,6 @@ def main(
                 bids_root=Path(
                     st.session_state.get("paths", {}).get("bids_root")
                 ),
-                derivatives=Path(
-                    st.session_state.get("paths", {}).get("bids_deriv")
-                )
-                if st.session_state.get("paths", {}).get("bids_deriv")
-                else None,
                 cache_path=Path(
                     st.session_state.get("paths", {}).get("bids_cache")
                 )
@@ -175,7 +159,6 @@ if __name__ == "__main__":
     args = _parse_args()
     # argparse will have converted --config-file to a Path (or None)
     main(
-        config_file=args.config_file,
         autoload=args.autoload,
     )
 

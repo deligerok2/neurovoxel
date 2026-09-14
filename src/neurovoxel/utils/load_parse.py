@@ -4,12 +4,10 @@
 
 from __future__ import annotations
 
-import json
 from copy import deepcopy
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
-import jsonschema
 import pandas as pd
 from bids2table.pybids import (
     BIDSFile,
@@ -19,35 +17,18 @@ from formulaic import (
     model_matrix,  # pyright: ignore[reportUnknownVariableType]
 )
 
-from neurovoxel.utils import SCHEMA
-
 if TYPE_CHECKING:
     from pathlib import Path
 
 
-def load_config(config_file: Path) -> dict[str, Any]:
-    """Load and validate a NeuroVoxel configuration file."""
-    with config_file.open("r") as f:
-        config = json.load(f)
-
-    jsonschema.validate(config, SCHEMA)
-
-    return config
-
-
 def load_bids(
     bids_root: Path,
-    derivatives: Path | None = None,
     cache_path: Path | None = None,
-    database_path: Path | None = None,
-    config_fname: Path | None = None,
 ) -> BIDSLayout:
     """Load BIDS dataset."""
     layout = BIDSLayout(
-        root=bids_root,
-        derivatives=derivatives,
-        cache_path=cache_path,
-        database_path=database_path,
+        root=bids_root, #bids_root/derivatives
+        cache_path=cache_path, #should be corresponding to derivatives
     )
     return layout
 

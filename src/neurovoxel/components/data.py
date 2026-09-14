@@ -25,18 +25,23 @@ def render_entity_table(entity_df: DataFrame) -> DataFrame:
     if len(duplicated_names) > 0:
         for name in duplicated_names:
             mask = entity_df["name"] == name
-            duplicate_rows = entity_df.loc[mask] # type: ignore  # noqa: PGH003
+            duplicate_rows = entity_df.loc[mask]  # type: ignore  # noqa: PGH003
 
-            for idx, row in duplicate_rows.iterrows(): # type: ignore  # noqa: PGH003
-                # Use every column except name to disambiguate
+            for idx, row in duplicate_rows.iterrows():  # type: ignore  # noqa: PGH003
                 suffix_values = [
-                    str(row[col]) # type: ignore  # noqa: PGH003
+                    str(row[col])  # type: ignore  # noqa: PGH003
                     for col in entity_df.columns
-                     if col != "name" and pd.notna(row[col])  # type: ignore  # noqa: PGH003
-                     and str(row[col]) != str(name) # type: ignore  # noqa: PGH003
+                    if (
+                        col != "name"
+                        and pd.notna(row[col])  # type: ignore  # noqa: PGH003
+                        and str(row[col]) != str(name)  # type: ignore  # noqa: PGH003
+                        and duplicate_rows[col].nunique(dropna=False) > 1
+                    )
                 ]
 
-                entity_df.loc[idx, "name"] = f"{name}_{'_'.join(suffix_values)}"
+                entity_df.loc[idx, "name"] = (
+                    f"{name}_{'_'.join(suffix_values)}"
+                )
 
     edited_df = st.data_editor(
             entity_df,
@@ -51,7 +56,7 @@ def render_entity_table(entity_df: DataFrame) -> DataFrame:
     if edited_df["name"].duplicated().any():
         st.error(
             "Entries in the 'name' column must be unique. "
-            "Please fix duplicates before continuing."
+            "Please fix duplicates by editing the names."
         )
 
     return edited_df
