@@ -287,3 +287,17 @@ def render_inference_choices(rhs: pd.Index) -> None:
             if cbox:
                 inference_terms.add(indep_var)
     st.session_state.analysis["inference_terms"] = inference_terms
+
+
+def parameter_output(
+    paths: dict[str, str],
+    analysis: dict[str, str | float | int | bool | None],
+) -> dict[
+    str,
+    dict[str, str] | dict[str, str | float | int | bool | None],
+]:
+    """Return a dictionary of parameters for saving."""
+    return {
+        "paths": paths,
+        "analysis": analysis,
+    }

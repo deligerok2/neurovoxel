@@ -6,8 +6,11 @@ from pandas import DataFrame
 
 
 def render_entity_table(entity_df: DataFrame) -> DataFrame:
-    """Editable table: only 'name' is editable; duplicate names are disambiguated."""
+    """Editable table: only 'name' is editable;
+    duplicate names are disambiguated.
+    """  # noqa: D205
     st.write("Types of images in dataset:")
+    st.caption("Names in name column can be edited to avoid duplicates.")
 
     # Make only the 'name' column editable
     disabled_cols = [c for c in entity_df.columns if c != "name"]
@@ -35,22 +38,25 @@ def render_entity_table(entity_df: DataFrame) -> DataFrame:
                         col != "name"
                         and pd.notna(row[col])  # type: ignore  # noqa: PGH003
                         and str(row[col]) != str(name)  # type: ignore  # noqa: PGH003
-                        and duplicate_rows[col].nunique(dropna=False) > 1
+                        and duplicate_rows[col].nunique(dropna=False) > 1  # pyright: ignore[reportUnknownMemberType]  # noqa: PD101
                     )
                 ]
 
-                entity_df.loc[idx, "name"] = (
-                    f"{name}_{'_'.join(suffix_values)}"
-                )
+                if suffix_values:
+                    entity_df.loc[idx, "name"] = (
+                        f"{name}_{'_'.join(suffix_values)}"
+                    )
+                else:
+                    entity_df.loc[idx, "name"] = str(name)
 
     edited_df = st.data_editor(
-            entity_df,
-            disabled=disabled_cols,
-            key="entity_table_editor",
-            width="content",
-            column_order=cols,
-            hide_index=True,
-        )
+        entity_df,
+        disabled=disabled_cols,
+        key="entity_table_editor",
+        width="content",
+        column_order=cols,
+        hide_index=True,
+    )
 
     # Check whether the resulting names are unique
     if edited_df["name"].duplicated().any():

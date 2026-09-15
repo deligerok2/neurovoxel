@@ -27,10 +27,10 @@ def load_bids(
 ) -> BIDSLayout:
     """Load BIDS dataset."""
     layout = BIDSLayout(
-        root=bids_root, #bids_root/derivatives
-        cache_path=cache_path, #should be corresponding to derivatives
+        root=bids_root,  # bids_root/derivatives
+        cache_path=cache_path,  # should be corresponding to derivatives
     )
-    return layout
+    return layout  # noqa: RET504
 
 
 def parse_layout(layout: BIDSLayout) -> pd.DataFrame:
@@ -43,9 +43,9 @@ def parse_layout(layout: BIDSLayout) -> pd.DataFrame:
         DataFrame of image types.
     """
     # list available imaging outcomes
-    img_list: list[BIDSFile] = layout.get(
-        extension=".nii.gz"
-    ) + layout.get(extension="nii")  # pyright: ignore[reportAssignmentType, reportUnknownMemberType]
+    img_list: list[BIDSFile] = layout.get(extension=".nii.gz") + layout.get(
+        extension="nii"
+    )  # pyright: ignore[reportAssignmentType, reportUnknownMemberType]
     img_type_counts: dict[tuple[tuple[str, object], ...], int] = {}
     entity_df = pd.DataFrame()
 

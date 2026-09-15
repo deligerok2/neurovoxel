@@ -12,6 +12,7 @@ from neurovoxel.components.footer import render_footer
 from neurovoxel.components.header import render_header
 from neurovoxel.components.model_runner import render_model_runner
 from neurovoxel.components.user_input import (
+    parameter_output,
     render_analysis_param_input,
     render_bids_input,
     render_inference_choices,
@@ -25,7 +26,7 @@ from neurovoxel.utils.load_parse import (
     parse_layout,
     parse_query,
 )
-from neurovoxel.utils.viz import save_all_maps
+from neurovoxel.utils.viz import save_all_maps, save_parameters
 
 
 def main(
@@ -122,11 +123,21 @@ def main(
 
         if valid_outputdir:
             outpath = Path(st.session_state.get("paths", {}).get("outputdir"))
+            analysis = st.session_state.analysis.copy()
+            analysis.pop("inference_terms", None)
+            output_parameters = parameter_output(
+                st.session_state.paths,
+                analysis,
+            )
             save_all_maps(
                 outpath,
                 st.session_state.result,
                 st.session_state.masker,
                 lhs,
+            )
+            save_parameters(
+                outpath / "parameters.json",
+                output_parameters,
             )
             # save tbl
             st.session_state.tbl.to_csv(outpath / "tbl.csv", index=False)
