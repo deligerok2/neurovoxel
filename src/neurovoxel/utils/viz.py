@@ -169,19 +169,25 @@ def save_all_maps(
     result: dict[str, np.typing.NDArray[Any]],
     masker: MultiNiftiMasker,
     imgvar: str,
-) -> None:
+) -> list[str]:
     """Save all stat maps."""
     testedvars = result["tested_var_names"]
     outputdir.mkdir(parents=True, exist_ok=True)
 
+    statistical_maps = []
+
     for stat in STAT_OPTIONS + P_OPTIONS:
         if stat in result:
             for idx in range(result[stat].shape[0]):
-                # <source>_contrast-<label>_stat-<label>_<mod>map.nii.gz
                 testedvar = sub(r"[^\w]", "", testedvars[idx])
                 stt = stat.replace("_", "")
+
                 filename = (
                     outputdir
                     / f"{imgvar}_contrast-{testedvar}_stat-{stt}_map.nii.gz"
                 )
+
                 save_stat_map(filename, result, masker, idx, stat)
+                statistical_maps.append(filename.name)
+
+    return statistical_maps

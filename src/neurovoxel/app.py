@@ -26,6 +26,7 @@ from neurovoxel.utils.load_parse import (
     parse_layout,
     parse_query,
 )
+from neurovoxel.utils.output import VERSION, commit, packages, timestamp
 from neurovoxel.utils.viz import save_all_maps, save_parameters
 
 
@@ -125,22 +126,30 @@ def main(
             outpath = Path(st.session_state.get("paths", {}).get("outputdir"))
             analysis = st.session_state.analysis.copy()
             analysis.pop("inference_terms", None)
-            output_parameters = parameter_output(
-                st.session_state.paths,
-                analysis,
-            )
-            save_all_maps(
+            statistical_maps = save_all_maps(
                 outpath,
                 st.session_state.result,
                 st.session_state.masker,
                 lhs,
             )
+
+            st.session_state.tbl.to_csv(outpath / "tbl.csv", index=False)
+
+            output_parameters = parameter_output(
+                st.session_state.paths,
+                analysis,
+                VERSION,
+                timestamp,
+                commit,
+                statistical_maps,
+                "tbl.csv",
+                packages,
+            )
+
             save_parameters(
                 outpath / "parameters.json",
                 output_parameters,
             )
-            # save tbl
-            st.session_state.tbl.to_csv(outpath / "tbl.csv", index=False)
 
     render_footer()
 
