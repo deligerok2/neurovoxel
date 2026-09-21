@@ -6,6 +6,9 @@ import argparse
 from pathlib import Path
 
 import streamlit as st
+from atlasreader import (
+    create_output,  # pyright: ignore[reportUnknownVariableType]
+)
 
 from neurovoxel.components.data import render_entity_table
 from neurovoxel.components.footer import render_footer
@@ -28,6 +31,46 @@ from neurovoxel.utils.load_parse import (
 )
 from neurovoxel.utils.output import VERSION, commit, packages, timestamp
 from neurovoxel.utils.viz import save_all_maps, save_parameters
+
+
+def _save_analysis_results(
+    outpath: Path,
+    lhs: str,
+) -> None:
+    """Save analysis maps, tables, and metadata to the output directory."""
+    analysis = st.session_state.analysis.copy()
+    analysis.pop("inference_terms", None)
+    statistical_maps = save_all_maps(
+        outpath,
+        st.session_state.result,
+        st.session_state.masker,
+        lhs,
+    )
+
+    atlasreader_output_path = outpath / "atlasreader_output"
+    atlasreader_output_path.mkdir(exist_ok=True)
+    create_output(
+        outpath / statistical_maps[1],
+        cluster_extent=5,
+        outdir=atlasreader_output_path,
+    )
+    atlasreader_output = [
+        file_path.name for file_path in atlasreader_output_path.glob("*")
+    ]
+
+    st.session_state.tbl.to_csv(outpath / "tbl.csv", index=False)
+    output_parameters = parameter_output(
+        st.session_state.paths,
+        analysis,
+        VERSION,
+        timestamp,
+        commit,
+        statistical_maps,
+        "tbl.csv",
+        atlasreader_output,
+        packages,
+    )
+    save_parameters(outpath / "parameters.json", output_parameters)
 
 
 def main(
@@ -124,32 +167,7 @@ def main(
 
         if valid_outputdir:
             outpath = Path(st.session_state.get("paths", {}).get("outputdir"))
-            analysis = st.session_state.analysis.copy()
-            analysis.pop("inference_terms", None)
-            statistical_maps = save_all_maps(
-                outpath,
-                st.session_state.result,
-                st.session_state.masker,
-                lhs,
-            )
-
-            st.session_state.tbl.to_csv(outpath / "tbl.csv", index=False)
-
-            output_parameters = parameter_output(
-                st.session_state.paths,
-                analysis,
-                VERSION,
-                timestamp,
-                commit,
-                statistical_maps,
-                "tbl.csv",
-                packages,
-            )
-
-            save_parameters(
-                outpath / "parameters.json",
-                output_parameters,
-            )
+            _save_analysis_results(outpath, lhs)
 
     render_footer()
 

@@ -297,6 +297,7 @@ def parameter_output(  # noqa: PLR0913
     commit: str,
     statistical_maps: list[str],
     tabular_summary: str,
+    atlasreader_output: list[str],
     packages: dict[str, str],
 ) -> dict[
     str,
@@ -314,5 +315,6 @@ def parameter_output(  # noqa: PLR0913
         "commit": commit,
         "statistical maps in output folder": statistical_maps,
         "tabular summary in output folder": tabular_summary,
+        "atlasreader output in output folder": atlasreader_output,
         "packages": packages,
     }
