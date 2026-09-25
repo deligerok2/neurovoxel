@@ -23,6 +23,7 @@ from neurovoxel.components.user_input import (
 from neurovoxel.components.visualization import render_visualization
 from neurovoxel.utils.load_parse import (
     load_bids,
+    load_config,
     parse_layout,
     parse_query,
 )
@@ -37,8 +38,10 @@ def _load_dataset() -> None:
     st.session_state.layout = load_bids(
         bids_root=Path(st.session_state.get("paths", {}).get("bids_root")),
         cache_path=Path(
-            st.session_state.get("paths", {}).get("bids_cache", None)
-        ),
+            st.session_state.get("paths", {}).get("bids_cache")
+        )
+        if st.session_state.get("paths", {}).get("bids_cache")
+        else None
     )
     info_loading_bids_box.empty()
     st.toast("BIDS dataset loaded successfully!")
@@ -112,6 +115,13 @@ def main(
 
     if config_file:
         st.info(f"Using NeuroVoxel configuration file: {config_file}")
+        config = load_config(Path(config_file))
+        st.toast(
+            "Configuration file loaded and validated! "
+            "Inputs will be pre-filled."
+        )
+        st.session_state.paths.update(config.get("paths", {}))
+        st.session_state.analysis.update(config.get("analysis", {}))
 
     with st.container():
         # left/right UI setup
