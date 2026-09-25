@@ -1,53 +1,20 @@
 """Display data table."""
 
-import pandas as pd
 import streamlit as st
 from pandas import DataFrame
 
 
 def render_entity_table(entity_df: DataFrame) -> DataFrame:
-    """Editable table: only 'name' is editable;
-    duplicate names are disambiguated.
-    """  # noqa: D205
+    """Editable table: only 'name' is editable; validates uniqueness."""
     st.write("Types of images in dataset:")
-    st.caption("Names in name column can be edited to avoid duplicates.")
 
     # Make only the 'name' column editable
     disabled_cols = [c for c in entity_df.columns if c != "name"]
-
     cols = list(entity_df.columns)
+    # move the 'name' column to the beginning
     if "name" in cols:
         cols.remove("name")
         cols = ["name", *cols]
-
-    # Find duplicated names
-    duplicated_names = entity_df.loc[
-        entity_df["name"].duplicated(keep=False), "name"
-    ].unique()
-
-    if len(duplicated_names) > 0:
-        for name in duplicated_names:
-            mask = entity_df["name"] == name
-            duplicate_rows = entity_df.loc[mask]  # type: ignore  # noqa: PGH003
-
-            for idx, row in duplicate_rows.iterrows():  # type: ignore  # noqa: PGH003
-                suffix_values = [
-                    str(row[col])  # type: ignore  # noqa: PGH003
-                    for col in entity_df.columns
-                    if (
-                        col != "name"
-                        and pd.notna(row[col])  # type: ignore  # noqa: PGH003
-                        and str(row[col]) != str(name)  # type: ignore  # noqa: PGH003
-                        and duplicate_rows[col].nunique(dropna=False) > 1  # pyright: ignore[reportUnknownMemberType]  # noqa: PD101
-                    )
-                ]
-
-                if suffix_values:
-                    entity_df.loc[idx, "name"] = (
-                        f"{name}_{'_'.join(suffix_values)}"
-                    )
-                else:
-                    entity_df.loc[idx, "name"] = str(name)
 
     edited_df = st.data_editor(
         entity_df,
@@ -58,11 +25,10 @@ def render_entity_table(entity_df: DataFrame) -> DataFrame:
         hide_index=True,
     )
 
-    # Check whether the resulting names are unique
-    if edited_df["name"].duplicated().any():
+    if "name" in edited_df and edited_df["name"].duplicated().any():
         st.error(
             "Entries in the 'name' column must be unique. "
-            "Please fix duplicates by editing the names."
+            "Please fix duplicates by editing the names in the names column."
         )
 
     return edited_df

@@ -1,9 +1,8 @@
-bids_root: /Users/deligerok2/Library/CloudStorage/OneDrive-NationalInstitutesofHealth/blsa_open/blsa_open_neuroimaging/derivatives/preprocessed
-bids_config: /Users/deligerok2/Library/CloudStorage/OneDrive-NationalInstitutesofHealth/blsa_open/blsa_open_entity_config.json
-tabular: /Users/deligerok2/Library/CloudStorage/OneDrive-NationalInstitutesofHealth/blsa_open/blsa_open_tabular/blsa_open.csv
-template: /Users/deligerok2/Library/CloudStorage/OneDrive-NationalInstitutesofHealth/blsa_open/blsa_open_neuroimaging/derivatives/template/tpl-blsa_T1w.nii.gz
-mask: /Users/deligerok2/Library/CloudStorage/OneDrive-NationalInstitutesofHealth/blsa_open/blsa_open_neuroimaging/derivatives/template/tpl-blsa_desc-gm_mask.nii.gz
-output: /Users/deligerok2/First_Project/testing_nv
+bids_root: /path/to/bids_root
+bids_cache: /path/to/bids_config.json
+tabular: /path/to/tabular.csv
+template: /path/to/template.nii.gz
+mask: /path/to/mask.nii.gz
 
 analysis:
   query: ""
