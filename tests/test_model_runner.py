@@ -1,22 +1,27 @@
+"""Testing the model runner component."""
+
+from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import MagicMock, Mock, sentinel
 
 import pandas as pd
 import pytest
 
-import neurovoxel.ui.model_runner as runner
+import neurovoxel.components.model_runner as mod
 
 
-class FakeSessionState(dict):
+class FakeSessionState(dict[str, object]):
     """Support both dictionary and attribute access."""
 
-    def __getattr__(self, name):
+    def __getattr__(self, name: str) -> object:
+        """Return a stored value for attribute-style access."""
         try:
             return self[name]
         except KeyError as exc:
             raise AttributeError(name) from exc
 
-    def __setattr__(self, name, value):
+    def __setattr__(self, name: str, value: object) -> None:
+        """Store a value using attribute-style access."""
         self[name] = value
 
 
@@ -29,12 +34,13 @@ class FakeSessionState(dict):
     ids=["default-options", "custom-options"],
 )
 def test_render_model_runner(
-    monkeypatch,
-    tmp_path,
-    overrides,
-    expected_n_jobs,
-    expected_random_state,
-):
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    overrides: dict[str, object],
+    expected_n_jobs: int,
+    expected_random_state: int,
+) -> None:
+    """Verify model runner configuration and saved outputs."""
     input_tbl = pd.DataFrame({"subject": ["01"]})
     output_tbl = pd.DataFrame({"subject": ["01"], "included": [True]})
     images = [sentinel.image]
@@ -78,11 +84,11 @@ def test_render_model_runner(
     get_masker = Mock(return_value=sentinel.masker)
     run_query = Mock(return_value=(sentinel.result, output_tbl))
 
-    monkeypatch.setattr(runner, "st", fake_st)
-    monkeypatch.setattr(runner, "get_masker", get_masker)
-    monkeypatch.setattr(runner, "run_query", run_query)
+    monkeypatch.setattr(mod, "st", fake_st)
+    monkeypatch.setattr(mod, "get_masker", get_masker)
+    monkeypatch.setattr(mod, "run_query", run_query)
 
-    returned = runner.render_model_runner("gm")
+    returned = mod.render_model_runner("gm")
 
     # Select the requested entity and remove name/missing columns.
     layout.get.assert_called_once_with(suffix="probseg", label="GM")
