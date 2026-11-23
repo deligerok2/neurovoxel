@@ -95,21 +95,20 @@ def run_query(  # noqa: PLR0913, PLR0915
     lhs = lhs.strip()
     rhs = rhs.strip()
 
-    image_df = pd.DataFrame()
-    for index, image in enumerate(images):
-        image_df = pd.concat(
-            [
-                image_df,
-                pd.DataFrame(
-                    {
-                        "subject": image.get_entities()["sub"],
-                        "session": image.get_entities()["ses"],
-                        lhs: root / image.path,
-                    },
-                    index=[index],
-                ),
-            ]
+    image_rows = []
+
+    for image in images:
+        entities = image.get_entities()  # pyright: ignore[reportUnknownVariableType]
+
+        image_rows.append(  # pyright: ignore[reportUnknownMemberType]
+            {
+                "subject": entities["sub"],
+                "session": entities["ses"],
+                lhs: root / image.path,
+            }
         )
+
+    image_df = pd.DataFrame(image_rows)
 
     tbl = tbl[list(tbl_vars)].merge(  # pyright: ignore[reportUnknownArgumentType]
         image_df, on=["subject", "session"], how="inner"
@@ -173,15 +172,6 @@ def run_query(  # noqa: PLR0913, PLR0915
         )
         raise ValueError(message)
 
-    # Build y_mat from the image paths corresponding to the filtered `tbl` so
-    # rows of y_mat align with rows of x_mat.
-    y_mat = prepare_y_mat(
-        tbl[lhs].to_numpy(),  # pyright: ignore[reportUnknownMemberType]
-        masker,
-        handle_zero_voxels,
-        voxelwise_standardization,
-    )
-
     # handle missing independent variables by excluding observations
     # Remove rows from x_mat and y_mat where x_mat contains any missing values
     valid_rows = ~np.isnan(x_mat).any(axis=1)  # pyright: ignore[reportUnknownArgumentType]
@@ -196,6 +186,16 @@ def run_query(  # noqa: PLR0913, PLR0915
         raise ValueError(msg)
 
     x_mat = x_mat[valid_rows, :]  # pyright: ignore[reportUnknownVariableType]
+
+    # Build y_mat from the image paths corresponding to the filtered `tbl` so
+    # rows of y_mat align with rows of x_mat.
+    y_mat = prepare_y_mat(
+        tbl[lhs].to_numpy(),  # pyright: ignore[reportUnknownMemberType]
+        masker,
+        handle_zero_voxels,
+        voxelwise_standardization,
+    )
+
     y_mat = y_mat[valid_rows, :]  # pyright: ignore[reportUnknownVariableType]
 
     # Cancel analysis if any predictor columns contain only zeros after removing
